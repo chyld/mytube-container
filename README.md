@@ -4,6 +4,8 @@ A Docker Compose setup for running [MyTube](https://github.com/franklioxygen/MyT
 
 It uses the official single-container image `ghcr.io/franklioxygen/mytube:latest`, which serves both the web UI and the backend API on one port. Images are published for amd64 and arm64.
 
+A short-lived `mytube-init` container runs before MyTube on each start. It sets the data volume's ownership to `PUID`/`PGID` so the app can write to it, then exits. `docker compose ps -a` shows it as exited; that's expected.
+
 ## Requirements
 
 - Docker with the Compose plugin (`docker compose version` should work)
@@ -78,6 +80,7 @@ docker compose down -v
 
 ## Troubleshooting
 
+- **`Runtime home directory is not writable ... /app/data/.home`:** the data volume was created before `mytube-init` was added to this repo. Run `git pull`, then `docker compose up -d`.
 - **Permission errors writing to `uploads/`:** set `PUID`/`PGID` in `.env` to match the folder's owner, then run `docker compose up -d`.
 - **Port already in use:** change `MYTUBE_PORT` in `.env`.
 - **`sysctl` error on startup:** some hosts (for example OpenWrt, or rootless Docker) don't allow the IPv6 sysctls. Remove the `sysctls:` block from `docker-compose.yml`.

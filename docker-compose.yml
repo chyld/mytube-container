@@ -7,11 +7,28 @@
 # Optional overrides go in a .env file next to this one (see bottom of file).
 
 services:
+  # One-shot setup step. Upstream's entrypoint creates /app/data/.home as root
+  # but skips its ownership fix when /app/data is already owned by PUID:PGID
+  # (true for a fresh named volume), so the app exits with "Runtime home
+  # directory is not writable". Create it with the right owner first.
+  mytube-init:
+    image: ghcr.io/franklioxygen/mytube:latest
+    user: "0:0"
+    entrypoint: ["sh", "-c"]
+    command:
+      - mkdir -p /app/data/.home && chown -R ${PUID:-1000}:${PGID:-1000} /app/data
+    volumes:
+      - mytube-data:/app/data
+    restart: "no"
+
   mytube:
     image: ghcr.io/franklioxygen/mytube:latest
     container_name: mytube
     pull_policy: always
     restart: unless-stopped
+    depends_on:
+      mytube-init:
+        condition: service_completed_successfully
     ports:
       - "${MYTUBE_PORT:-5551}:5551"
     environment:
