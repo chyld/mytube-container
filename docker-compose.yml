@@ -1,0 +1,45 @@
+# MyTube (https://github.com/franklioxygen/MyTube)
+# Single-container deployment: backend API + frontend UI in one image.
+#
+#   docker compose up -d
+#   open http://localhost:5551
+#
+# Optional overrides go in a .env file next to this one (see bottom of file).
+
+services:
+  mytube:
+    image: ghcr.io/franklioxygen/mytube:latest
+    container_name: mytube
+    pull_policy: always
+    restart: unless-stopped
+    ports:
+      - "${MYTUBE_PORT:-5551}:5551"
+    environment:
+      - PORT=5551
+      # Run the backend as the same uid/gid that owns ./uploads on the host.
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      # Startup chown pass for bind-mounted dirs; set to 0 to disable.
+      - MYTUBE_AUTO_FIX_PERMISSIONS=${MYTUBE_AUTO_FIX_PERMISSIONS:-1}
+      # Admin trust boundary: application | container | host
+      # "container" enables in-app features like the yt-dlp updater.
+      - MYTUBE_ADMIN_TRUST_LEVEL=${MYTUBE_ADMIN_TRUST_LEVEL:-container}
+    volumes:
+      # Downloaded videos and thumbnails (bind mount so you can browse them).
+      - ${MYTUBE_UPLOADS_DIR:-./uploads}:/app/uploads
+      # SQLite DB, logs, yt-dlp releases. Named volume per upstream advice:
+      # avoids host ownership/ACL issues with SQLite.
+      - mytube-data:/app/data
+    # Avoid Chromium/Puppeteer stalls on hosts with half-enabled IPv6.
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.default.disable_ipv6=1
+
+volumes:
+  mytube-data:
+
+# Example .env:
+#   MYTUBE_PORT=5551
+#   MYTUBE_UPLOADS_DIR=/mnt/media/mytube
+#   PUID=1000
+#   PGID=1000
