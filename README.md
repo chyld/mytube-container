@@ -6,6 +6,12 @@ It uses the official single-container image `ghcr.io/franklioxygen/mytube:latest
 
 A short-lived `mytube-init` container runs before MyTube on each start. It sets the data volume's ownership to `PUID`/`PGID` so the app can write to it, then exits. `docker compose ps -a` shows it as exited; that's expected.
 
+## Explainer video
+
+[![Watch the explainer video](docs/explainer-poster.png)](docs/explainer.mp4)
+
+A 77-second silent walkthrough of what this repo does, how to run it, and the startup bug the `mytube-init` service fixes. Click the image to open [`docs/explainer.mp4`](docs/explainer.mp4).
+
 ## Requirements
 
 - Docker with the Compose plugin (`docker compose version` should work)
